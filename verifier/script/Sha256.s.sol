@@ -6,6 +6,7 @@ import {Sha256} from "../src/Sha256.sol";
 
 contract ShaScript is Script {
     Sha256 public hasher;
+    bytes32 public hash;
 
     function setUp() public {}
 
@@ -13,6 +14,8 @@ contract ShaScript is Script {
         vm.startBroadcast();
 
         hasher = new Sha256();
+        vm.breakpoint("h");
+        hash = hasher.hashPure("");
 
         vm.stopBroadcast();
     }

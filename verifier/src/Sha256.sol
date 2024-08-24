@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import {Test, console} from "forge-std/Test.sol";
 
 contract Sha256 {
     function hashAccel(bytes calldata _input) public pure returns (bytes32) {
@@ -34,26 +35,24 @@ contract Sha256 {
             uint256 offset = i * 64;
             for (uint256 j = 0; j < 16; j++) {
                 oneBlock[j] = uint32(
-                    (uint8(padded[offset + j * 4]) << 24) |
-                        (uint8(padded[offset + j * 4 + 1]) << 16) |
-                        (uint8(padded[offset + j * 4 + 2]) << 8) |
-                        uint8(padded[offset + j * 4 + 3])
+                    (uint32(uint8(padded[offset + j * 4])) << 24) |
+                        (uint32(uint8(padded[offset + j * 4 + 1])) << 16) |
+                        (uint32(uint8(padded[offset + j * 4 + 2])) << 8) |
+                        (uint32(uint8(padded[offset + j * 4 + 3])))
                 );
             }
+
             state = compress(state, oneBlock);
         }
 
-        bytes32 hash;
-
-        hash =
-            bytes32(uint256(state[0])) |
-            (bytes32(uint256(state[1])) << 32) |
-            (bytes32(uint256(state[2])) << 64) |
-            (bytes32(uint256(state[3])) << 96) |
-            (bytes32(uint256(state[4])) << 128) |
-            (bytes32(uint256(state[5])) << 160) |
-            (bytes32(uint256(state[6])) << 192) |
-            (bytes32(uint256(state[7])) << 224);
+        bytes32 hash = bytes32(uint256(state[0]) << 224) |
+            bytes32(uint256(state[1]) << 192) |
+            bytes32(uint256(state[2]) << 160) |
+            bytes32(uint256(state[3]) << 128) |
+            bytes32(uint256(state[4]) << 96) |
+            bytes32(uint256(state[5]) << 64) |
+            bytes32(uint256(state[6]) << 32) |
+            bytes32(uint256(state[7]));
 
         return hash;
     }
@@ -108,9 +107,9 @@ contract Sha256 {
             // Initialize the rest of the schedule array
             for (uint256 i = 16; i < 64; i++) {
                 sched[i] =
-                    sigma1(sched[i - 2]) +
+                    lsigma1(sched[i - 2]) +
                     sched[i - 7] +
-                    sigma0(sched[i - 15]) +
+                    lsigma0(sched[i - 15]) +
                     sched[i - 16];
             }
 
@@ -191,8 +190,8 @@ contract Sha256 {
             uint32 h = _state[7];
 
             for (uint256 i = 0; i < 64; i++) {
-                uint32 temp1 = h + Sigma1(e) + Ch(e, f, g) + k[i] + sched[i];
-                uint32 temp2 = Sigma0(a) + Maj(a, b, c);
+                uint32 temp1 = h + sigma1(e) + Ch(e, f, g) + k[i] + sched[i];
+                uint32 temp2 = sigma0(a) + Maj(a, b, c);
                 h = g;
                 g = f;
                 f = e;
@@ -203,16 +202,17 @@ contract Sha256 {
                 a = temp1 + temp2;
             }
 
-            _state[0] += a;
-            _state[1] += b;
-            _state[2] += c;
-            _state[3] += d;
-            _state[4] += e;
-            _state[5] += f;
-            _state[6] += g;
-            _state[7] += h;
+            uint32[8] memory newState;
+            newState[0] = _state[0] + a;
+            newState[1] = _state[1] + b;
+            newState[2] = _state[2] + c;
+            newState[3] = _state[3] + d;
+            newState[4] = _state[4] + e;
+            newState[5] = _state[5] + f;
+            newState[6] = _state[6] + g;
+            newState[7] = _state[7] + h;
 
-            return _state;
+            return newState;
         }
     }
 
@@ -225,25 +225,23 @@ contract Sha256 {
         return (x & y) ^ (x & z) ^ (y & z);
     }
 
-    function Sigma0(uint32 x) private pure returns (uint32) {
-        return
-            ((x >> 2) | (x << 30)) ^
-            ((x >> 13) | (x << 19)) ^
-            ((x >> 22) | (x << 10));
-    }
-
-    function Sigma1(uint32 x) private pure returns (uint32) {
-        return
-            ((x >> 6) | (x << 26)) ^
-            ((x >> 11) | (x << 21)) ^
-            ((x >> 25) | (x << 7));
+    function rotr(uint32 x, uint32 n) private pure returns (uint32) {
+        return (x >> n) | (x << (32 - n));
     }
 
     function sigma0(uint32 x) private pure returns (uint32) {
-        return ((x >> 7) | (x << 25)) ^ ((x >> 18) | (x << 14)) ^ (x >> 3);
+        return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22);
     }
 
     function sigma1(uint32 x) private pure returns (uint32) {
-        return ((x >> 17) | (x << 15)) ^ ((x >> 19) | (x << 13)) ^ (x >> 10);
+        return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25);
+    }
+
+    function lsigma0(uint32 x) private pure returns (uint32) {
+        return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3);
+    }
+
+    function lsigma1(uint32 x) private pure returns (uint32) {
+        return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
     }
 }

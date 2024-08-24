@@ -21,6 +21,9 @@ contract HashTest is Test {
             hasher.hashPure(""),
             hex"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         );
+    }
+
+    function test_vec() public view {
         assertEq(
             hasher.hashPure(hex"bd"),
             hex"68325720aabd7c82f30f554b313d0570c95accbb7dc4b5aae11204c08ffe732b"
