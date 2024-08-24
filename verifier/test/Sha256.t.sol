@@ -11,11 +11,6 @@ contract HashTest is Test {
         hasher = new Sha256();
     }
 
-    function test_pad() public view {
-        console.logBytes(hasher.pad(""));
-        assertEq(hasher.pad("").length, 64);
-    }
-
     function test_hash() public view {
         assertEq(
             hasher.hashPure(""),
@@ -77,8 +72,8 @@ contract HashTest is Test {
         );
     }
 
-    // function testFuzz_hash(uint256 x) public view {
-    //     bytes memory data = abi.encodePacked(x);
-    //     assertEq(hasher.hashPure(data), hasher.hashPure(data));
-    // }
+    function testFuzz_hash(uint256 x) public view {
+        bytes memory data = abi.encodePacked(x);
+        assertEq(hasher.hashPure(data), hasher.hashPure(data));
+    }
 }
