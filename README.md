@@ -4,7 +4,7 @@ Yuki Aoki (AokiApp Inc., University of Tsukuba)
 
 ## Abstract
 
-This prpduct presents SPRM (State of Primary Elements that is Rolled-up and Merged), a novel optimization technique designed to enhance hash value calculations involving sensitive data. Traditional hashing mechanisms require the entire message, including confidential information, to compute the hash, raising significant privacy concerns. SPRM addresses this by consolidating the initial blocks containing sensitive data into a compact intermediate state, reducing data exposure and computational overhead in the hashing process.
+This product presents SPRM (State of Primary Elements that is Rolled-up and Merged), a novel optimization technique designed to enhance hash value calculations involving sensitive data. Traditional hashing mechanisms require the entire message, including confidential information, to compute the hash, raising significant privacy concerns. SPRM addresses this by consolidating the initial blocks containing sensitive data into a compact intermediate state, reducing data exposure and computational overhead in the hashing process.
 
 By leveraging the structural properties of hash functions like SHA-256, SPRM efficiently processes contiguous blocks of sensitive information, creating a smaller data footprint while maintaining hash integrity. This approach allows for the validation of data integrity without revealing or transmitting sensitive content. SPRM is particularly useful in scenarios requiring the verification of DID, VC, X.509 Certificates or other cryptographic proofs where both data hiding and transparency are required, and holder-exclusive NFT contents in decentralized manner.
 
@@ -137,5 +137,18 @@ We would like to present this work in the following tracks:
   - We believe that our work is related to the DID/VC ecosystem and incorporates a interesting mechanism and feature.
 - Metamask/Linea Prize: Build a DeFi, DeSoc, or Gaming App on Linea
   - We believe that our work around VC relates to DeSoc, and that of NFT relates to DeFi or Gaming App.
-  - Deployed contract: To Be Determined
--
+  - Deployed contract: 0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65 (Linea Sepolia Testnet)
+  - See: https://sepolia.lineascan.build/address/0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65#code
+- NERO Prize: Build dApps or tools using NERO Chain
+  - We believe that our work can be integrated with NERO Chain to enhance the privacy of the data.
+  - Deployed contract: 0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65 (NERO Chain Testnet)
+  - see: https://testnetscan.nerochain.io/address/0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65/contracts#address-tabs
+- NEO-X Prize
+  - Deployed on NEO-X Testnet
+  - Deployed contract: 0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65 (NEO-X Testnet)
+  - https://xt4scan.ngd.network/address/0x8FAC3AbfBfD92BeB634ba598af9b66a433e46d65
+
+Other tracks are also welcome.
+
+- Mercoin
+  - Mercoin focuses on NFTs, and our work is related to NFTs.
