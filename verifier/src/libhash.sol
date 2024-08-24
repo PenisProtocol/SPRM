@@ -8,7 +8,7 @@ library Libhash {
      * @param _input The input to pad
      * @return The padded input
      */
-    function pad(bytes calldata _input) public pure returns (bytes memory) {
+    function pad(bytes calldata _input) internal pure returns (bytes memory) {
         uint256 dataSize = _input.length;
         uint256 blockCount = (dataSize + 9) % 64 == 0
             ? (dataSize + 9) / 64
@@ -40,7 +40,7 @@ library Libhash {
     function compress(
         uint32[8] memory _state,
         uint32[16] memory _block
-    ) public pure returns (uint32[8] memory) {
+    ) internal pure returns (uint32[8] memory) {
         unchecked {
             uint32[64] memory sched; // schedule array W
 
