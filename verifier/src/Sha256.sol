@@ -101,11 +101,9 @@ contract Sha256 {
 
             for (uint256 j = 0; j < 16; j++) {
                 uint256 index = i * 64 + j * 4;
-                sched[j] =
-                    (uint32(uint8(padded[index])) << 24) |
-                    (uint32(uint8(padded[index + 1])) << 16) |
-                    (uint32(uint8(padded[index + 2])) << 8) |
-                    uint32(uint8(padded[index + 3]));
+                uint32 schedItm;
+                schedItm = uint32(padded[index]) << 24;
+                sched[j] = schedItm;
             }
 
             uint32 a = state[0];
