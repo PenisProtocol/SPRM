@@ -17,73 +17,6 @@ contract Sha256 {
 
         uint256 blockLength = padded.length / 64;
 
-        uint32[64] memory k = [
-            0x428a2f98,
-            0x71374491,
-            0xb5c0fbcf,
-            0xe9b5dba5,
-            0x3956c25b,
-            0x59f111f1,
-            0x923f82a4,
-            0xab1c5ed5,
-            0xd807aa98,
-            0x12835b01,
-            0x243185be,
-            0x550c7dc3,
-            0x72be5d74,
-            0x80deb1fe,
-            0x9bdc06a7,
-            0xc19bf174,
-            0xe49b69c1,
-            0xefbe4786,
-            0x0fc19dc6,
-            0x240ca1cc,
-            0x2de92c6f,
-            0x4a7484aa,
-            0x5cb0a9dc,
-            0x76f988da,
-            0x983e5152,
-            0xa831c66d,
-            0xb00327c8,
-            0xbf597fc7,
-            0xc6e00bf3,
-            0xd5a79147,
-            0x06ca6351,
-            0x14292967,
-            0x27b70a85,
-            0x2e1b2138,
-            0x4d2c6dfc,
-            0x53380d13,
-            0x650a7354,
-            0x766a0abb,
-            0x81c2c92e,
-            0x92722c85,
-            0xa2bfe8a1,
-            0xa81a664b,
-            0xc24b8b70,
-            0xc76c51a3,
-            0xd192e819,
-            0xd6990624,
-            0xf40e3585,
-            0x106aa070,
-            0x19a4c116,
-            0x1e376c08,
-            0x2748774c,
-            0x34b0bcb5,
-            0x391c0cb3,
-            0x4ed8aa4a,
-            0x5b9cca4f,
-            0x682e6ff3,
-            0x748f82ee,
-            0x78a5636f,
-            0x84c87814,
-            0x8cc70208,
-            0x90befffa,
-            0xa4506ceb,
-            0xbef9a3f7,
-            0xc67178f2
-        ];
-
         uint32[8] memory state = [
             0x6a09e667,
             0xbb67ae85,
@@ -97,60 +30,32 @@ contract Sha256 {
 
         // Process each block
         for (uint256 i = 0; i < blockLength; i++) {
-            uint32[64] memory sched;
-
+            uint32[16] memory oneBlock;
+            uint256 offset = i * 64;
             for (uint256 j = 0; j < 16; j++) {
-                uint256 index = i * 64 + j * 4;
-                uint32 schedItm;
-                schedItm = uint32(padded[index]) << 24;
-                sched[j] = schedItm;
+                oneBlock[j] = uint32(
+                    (uint8(padded[offset + j * 4]) << 24) |
+                        (uint8(padded[offset + j * 4 + 1]) << 16) |
+                        (uint8(padded[offset + j * 4 + 2]) << 8) |
+                        uint8(padded[offset + j * 4 + 3])
+                );
             }
-
-            uint32 a = state[0];
-            uint32 b = state[1];
-            uint32 c = state[2];
-            uint32 d = state[3];
-            uint32 e = state[4];
-            uint32 f = state[5];
-            uint32 g = state[6];
-            uint32 h = state[7];
-            unchecked {
-                for (uint256 j = 0; j < 64; j++) {
-                    uint32 t1 = h + Ch(e, f, g) + Sigma1(e) + sched[j] + k[j];
-                    uint32 t2 = Sigma0(a) + Maj(a, b, c);
-                    h = g;
-                    g = f;
-                    f = e;
-                    e = d + t1;
-                    d = c;
-                    c = b;
-                    b = a;
-                    a = t1 + t2;
-                }
-
-                state[0] += a;
-                state[1] += b;
-                state[2] += c;
-                state[3] += d;
-                state[4] += e;
-                state[5] += f;
-                state[6] += g;
-                state[7] += h;
-            }
+            state = compress(state, oneBlock);
         }
 
-        // Concatenate the hash segments into bytes32
-        return
-            bytes32(
-                (uint256(state[0]) << 224) |
-                    (uint256(state[1]) << 192) |
-                    (uint256(state[2]) << 160) |
-                    (uint256(state[3]) << 128) |
-                    (uint256(state[4]) << 96) |
-                    (uint256(state[5]) << 64) |
-                    (uint256(state[6]) << 32) |
-                    uint256(state[7])
-            );
+        bytes32 hash;
+
+        hash =
+            bytes32(uint256(state[0])) |
+            (bytes32(uint256(state[1])) << 32) |
+            (bytes32(uint256(state[2])) << 64) |
+            (bytes32(uint256(state[3])) << 96) |
+            (bytes32(uint256(state[4])) << 128) |
+            (bytes32(uint256(state[5])) << 160) |
+            (bytes32(uint256(state[6])) << 192) |
+            (bytes32(uint256(state[7])) << 224);
+
+        return hash;
     }
 
     /**
@@ -179,6 +84,136 @@ contract Sha256 {
         }
 
         return padded;
+    }
+
+    /**
+     * @dev
+     * Perform the SHA-256 compression function
+     * @param _state The current state of the hash
+     * @param _block The block to compress
+     * @return The new state of the hash
+     */
+    function compress(
+        uint32[8] memory _state,
+        uint32[16] memory _block
+    ) public pure returns (uint32[8] memory) {
+        unchecked {
+            uint32[64] memory sched; // schedule array W
+
+            // Initialize the first 16 words of the schedule array
+            for (uint256 i = 0; i < 16; i++) {
+                sched[i] = _block[i];
+            }
+
+            // Initialize the rest of the schedule array
+            for (uint256 i = 16; i < 64; i++) {
+                sched[i] =
+                    sigma1(sched[i - 2]) +
+                    sched[i - 7] +
+                    sigma0(sched[i - 15]) +
+                    sched[i - 16];
+            }
+
+            uint32[64] memory k = [
+                0x428a2f98,
+                0x71374491,
+                0xb5c0fbcf,
+                0xe9b5dba5,
+                0x3956c25b,
+                0x59f111f1,
+                0x923f82a4,
+                0xab1c5ed5,
+                0xd807aa98,
+                0x12835b01,
+                0x243185be,
+                0x550c7dc3,
+                0x72be5d74,
+                0x80deb1fe,
+                0x9bdc06a7,
+                0xc19bf174,
+                0xe49b69c1,
+                0xefbe4786,
+                0x0fc19dc6,
+                0x240ca1cc,
+                0x2de92c6f,
+                0x4a7484aa,
+                0x5cb0a9dc,
+                0x76f988da,
+                0x983e5152,
+                0xa831c66d,
+                0xb00327c8,
+                0xbf597fc7,
+                0xc6e00bf3,
+                0xd5a79147,
+                0x06ca6351,
+                0x14292967,
+                0x27b70a85,
+                0x2e1b2138,
+                0x4d2c6dfc,
+                0x53380d13,
+                0x650a7354,
+                0x766a0abb,
+                0x81c2c92e,
+                0x92722c85,
+                0xa2bfe8a1,
+                0xa81a664b,
+                0xc24b8b70,
+                0xc76c51a3,
+                0xd192e819,
+                0xd6990624,
+                0xf40e3585,
+                0x106aa070,
+                0x19a4c116,
+                0x1e376c08,
+                0x2748774c,
+                0x34b0bcb5,
+                0x391c0cb3,
+                0x4ed8aa4a,
+                0x5b9cca4f,
+                0x682e6ff3,
+                0x748f82ee,
+                0x78a5636f,
+                0x84c87814,
+                0x8cc70208,
+                0x90befffa,
+                0xa4506ceb,
+                0xbef9a3f7,
+                0xc67178f2
+            ];
+
+            uint32 a = _state[0];
+            uint32 b = _state[1];
+            uint32 c = _state[2];
+            uint32 d = _state[3];
+            uint32 e = _state[4];
+            uint32 f = _state[5];
+            uint32 g = _state[6];
+            uint32 h = _state[7];
+
+            for (uint256 i = 0; i < 64; i++) {
+                uint32 temp1 = h + Sigma1(e) + Ch(e, f, g) + k[i] + sched[i];
+                uint32 temp2 = Sigma0(a) + Maj(a, b, c);
+                h = g;
+                g = f;
+                f = e;
+                e = d + temp1;
+                d = c;
+                c = b;
+                b = a;
+                a = temp1 + temp2;
+            }
+
+            _state[0] += a;
+            _state[1] += b;
+            _state[2] += c;
+            _state[3] += d;
+            _state[4] += e;
+            _state[5] += f;
+            _state[6] += g;
+            _state[7] += h;
+
+            return _state;
+        }
     }
 
     // sha util
